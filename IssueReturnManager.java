@@ -1,3 +1,4 @@
+
 import java.time.LocalDate;
 import java.util.*;
 
@@ -76,4 +77,12 @@ public class IssueReturnManager {
         if (!found) sb.append("No transactions found.\n");
         return sb.toString();
     }
+public List<Transaction> getTransactions() {
+        return this.transactions;
+    }
+    
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
+    }
+
 }
