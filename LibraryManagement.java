@@ -326,7 +326,7 @@ public class LMS extends JFrame {
                 int bookId = Integer.parseInt(bookIdStr);
                 outputArea.setText(issueReturnManager.searchTransactionsByBookId(bookId));
             } catch (NumberFormatException ex) {
-                showMessage("Book ID must be a number.");
+                showMessage("Book ID Must be a number.");
             }
         });
 
