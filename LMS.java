@@ -1,14 +1,44 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Objects;
+import java.io.Serializable;
+import java.util.List;
 
-public class LMS extends JFrame {
+public class LMS extends JFrame implements Serializable {
     private BookManager bookManager = new BookManager();
     private MemberManager memberManager = new MemberManager();
     private IssueReturnManager issueReturnManager = new IssueReturnManager(bookManager, memberManager);
 
     private JTextArea outputArea;
 
+    private void loadInitialData() {
+        // Method to load data from files
+        bookManager.setBooks(DataManager.loadData("D:\\LibraryData\\books.ser"));
+        memberManager.setMembers(DataManager.loadData("D:\\LibraryData\\members.ser"));
+        issueReturnManager.setTransactions(DataManager.loadData("D:\\LibraryData\\transactions.ser"));
+    }
+
+    private void saveAllData() {
+        // Method to save data to files
+        DataManager.saveData(bookManager.getBooks(), "D:\\LibraryData\\books.ser");
+        DataManager.saveData(memberManager.getMembers(), "D:\\LibraryData\\members.ser");
+        DataManager.saveData(issueReturnManager.getTransactions(), "D:\\LibraryData\\transactions.ser");
+    }
+
     public LMS() {
+        // Call loadInitialData() at the beginning of the constructor
+        loadInitialData();
+
+        // Add a window listener to save data when the application is closed
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveAllData();
+            }
+        });
+
         setTitle("Library Management System");
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -36,49 +66,65 @@ public class LMS extends JFrame {
 
     private JPanel createBookPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Inputs
-        JPanel inputPanel = new JPanel(new GridLayout(5, 2, 5, 5));
-        JTextField titleField = new JTextField();
-        JTextField authorField = new JTextField();
-        JTextField genreField = new JTextField();
-        JTextField searchField = new JTextField();
-        JTextField deleteIdField = new JTextField();
+        // Main panel to hold all input and button panels
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        inputPanel.add(new JLabel("Title:"));
-        inputPanel.add(titleField);
-        inputPanel.add(new JLabel("Author:"));
-        inputPanel.add(authorField);
-        inputPanel.add(new JLabel("Genre:"));
-        inputPanel.add(genreField);
-
+        // Panel for adding a new book
+        JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField titleField = new JTextField(15);
+        JTextField authorField = new JTextField(15);
+        JTextField genreField = new JTextField(15);
         JButton addBookBtn = new JButton("Add Book");
-        inputPanel.add(addBookBtn);
 
+        addPanel.add(new JLabel("Title:"));
+        addPanel.add(titleField);
+        addPanel.add(new JLabel("Author:"));
+        addPanel.add(authorField);
+        addPanel.add(new JLabel("Genre:"));
+        addPanel.add(genreField);
+        addPanel.add(addBookBtn);
+
+        // Panel for displaying all books
+        JPanel displayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         JButton displayAllBtn = new JButton("Display All Books");
-        inputPanel.add(displayAllBtn);
+        displayPanel.add(displayAllBtn);
 
-        inputPanel.add(new JLabel("Search by Genre or Title:"));
-        inputPanel.add(searchField);
-
+        // Panel for searching books
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField searchField = new JTextField(20);
         JButton searchGenreBtn = new JButton("Search by Genre");
         JButton searchTitleBtn = new JButton("Search by Title");
-        inputPanel.add(searchGenreBtn);
-        inputPanel.add(searchTitleBtn);
 
-        inputPanel.add(new JLabel("Delete by Book ID:"));
-        inputPanel.add(deleteIdField);
+        searchPanel.add(new JLabel("Search by Genre or Title:"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchGenreBtn);
+        searchPanel.add(searchTitleBtn);
+
+        // Panel for deleting a book
+        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField deleteIdField = new JTextField(10);
         JButton deleteBtn = new JButton("Delete Book");
-        inputPanel.add(deleteBtn);
 
-        panel.add(inputPanel, BorderLayout.NORTH);
+        deletePanel.add(new JLabel("Delete by Book ID:"));
+        deletePanel.add(deleteIdField);
+        deletePanel.add(deleteBtn);
+
+        // Add all sub-panels to the main panel
+        mainPanel.add(addPanel);
+        mainPanel.add(displayPanel);
+        mainPanel.add(searchPanel);
+        mainPanel.add(deletePanel);
+
+        panel.add(mainPanel, BorderLayout.NORTH);
 
         // Button actions
         addBookBtn.addActionListener(e -> {
             String title = titleField.getText().trim();
             String author = authorField.getText().trim();
             String genre = genreField.getText().trim();
-
             if (title.isEmpty() || author.isEmpty() || genre.isEmpty()) {
                 showMessage("Please fill all book fields.");
                 return;
@@ -124,53 +170,63 @@ public class LMS extends JFrame {
                 showMessage("Book ID must be a number.");
             }
         });
-
         return panel;
     }
 
     private JPanel createMemberPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JPanel inputPanel = new JPanel(new GridLayout(7, 2, 5, 5));
-        JTextField rollField = new JTextField();
-        JTextField nameField = new JTextField();
-        JTextField searchRollField = new JTextField();
-        JTextField updateNameField = new JTextField();
-        JTextField deleteRollField = new JTextField();
+        // Main panel to hold input and buttons, using BoxLayout for vertical stacking
+        JPanel mainInputPanel = new JPanel();
+        mainInputPanel.setLayout(new BoxLayout(mainInputPanel, BoxLayout.Y_AXIS));
 
-        inputPanel.add(new JLabel("Roll Number:"));
-        inputPanel.add(rollField);
-        inputPanel.add(new JLabel("Name:"));
-        inputPanel.add(nameField);
-
+        // Panel for adding new members
+        JPanel addPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField rollField = new JTextField(10);
+        JTextField nameField = new JTextField(15);
+        addPanel.add(new JLabel("Roll Number:"));
+        addPanel.add(rollField);
+        addPanel.add(new JLabel("Name:"));
+        addPanel.add(nameField);
         JButton addMemberBtn = new JButton("Add Member");
-        inputPanel.add(addMemberBtn);
+        addPanel.add(addMemberBtn);
 
-        JButton displayAllBtn = new JButton("Display All Members");
-        inputPanel.add(displayAllBtn);
-
-        inputPanel.add(new JLabel("Search by Roll Number:"));
-        inputPanel.add(searchRollField);
-
+        // Panel for displaying and searching members
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField searchRollField = new JTextField(15);
         JButton searchBtn = new JButton("Search Member");
-        inputPanel.add(searchBtn);
+        searchPanel.add(new JLabel("Search by Roll Number:"));
+        searchPanel.add(searchRollField);
+        searchPanel.add(searchBtn);
+        JButton displayAllBtn = new JButton("Display All Members");
+        searchPanel.add(displayAllBtn);
 
-        inputPanel.add(new JLabel("Update Name for Roll Number:"));
-        inputPanel.add(rollField);
-
-        inputPanel.add(new JLabel("New Name:"));
-        inputPanel.add(updateNameField);
-
+        // Panel for updating members
+        JPanel updatePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField updateRollField = new JTextField(10);
+        JTextField updateNameField = new JTextField(15);
+        updatePanel.add(new JLabel("Update Name for Roll Number:"));
+        updatePanel.add(updateRollField);
+        updatePanel.add(new JLabel("New Name:"));
+        updatePanel.add(updateNameField);
         JButton updateBtn = new JButton("Update Member");
-        inputPanel.add(updateBtn);
-
-        inputPanel.add(new JLabel("Delete by Roll Number:"));
-        inputPanel.add(deleteRollField);
-
+        updatePanel.add(updateBtn);
+        
+        // Panel for deleting members
+        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JTextField deleteRollField = new JTextField(10);
+        deletePanel.add(new JLabel("Delete by Roll Number:"));
+        deletePanel.add(deleteRollField);
         JButton deleteBtn = new JButton("Delete Member");
-        inputPanel.add(deleteBtn);
+        deletePanel.add(deleteBtn);
 
-        panel.add(inputPanel, BorderLayout.NORTH);
+        mainInputPanel.add(addPanel);
+        mainInputPanel.add(searchPanel);
+        mainInputPanel.add(updatePanel);
+        mainInputPanel.add(deletePanel);
+
+        panel.add(mainInputPanel, BorderLayout.NORTH);
 
         // Button actions
         addMemberBtn.addActionListener(e -> {
@@ -199,14 +255,14 @@ public class LMS extends JFrame {
         });
 
         updateBtn.addActionListener(e -> {
-            String roll = rollField.getText().trim();
+            String roll = updateRollField.getText().trim();
             String newName = updateNameField.getText().trim();
             if (roll.isEmpty() || newName.isEmpty()) {
                 showMessage("Please enter roll number and new name.");
                 return;
             }
             outputArea.setText(memberManager.updateMember(roll, newName));
-            clearFields(rollField, updateNameField);
+            clearFields(updateRollField, updateNameField);
         });
 
         deleteBtn.addActionListener(e -> {
@@ -218,32 +274,44 @@ public class LMS extends JFrame {
             outputArea.setText(memberManager.deleteMember(roll));
             deleteRollField.setText("");
         });
-
+        
         return panel;
     }
 
     private JPanel createIssueReturnPanel() {
-        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JTextField issueRollField = new JTextField();
-        JTextField issueBookIdField = new JTextField();
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        JTextField returnBookIdField = new JTextField();
-
+        // Panel for issuing a book
+        JPanel issuePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField issueRollField = new JTextField(15);
+        JTextField issueBookIdField = new JTextField(15);
         JButton issueBtn = new JButton("Issue Book");
+        
+        issuePanel.add(new JLabel("Issue Book - Member Roll Number:"));
+        issuePanel.add(issueRollField);
+        issuePanel.add(new JLabel("Issue Book - Book ID:"));
+        issuePanel.add(issueBookIdField);
+        issuePanel.add(issueBtn);
+        
+        // Panel for returning a book
+        JPanel returnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField returnBookIdField = new JTextField(15);
         JButton returnBtn = new JButton("Return Book");
 
-        panel.add(new JLabel("Issue Book - Member Roll Number:"));
-        panel.add(issueRollField);
-        panel.add(new JLabel("Issue Book - Book ID:"));
-        panel.add(issueBookIdField);
-        panel.add(issueBtn);
+        returnPanel.add(new JLabel("Return Book - Book ID:"));
+        returnPanel.add(returnBookIdField);
+        returnPanel.add(returnBtn);
 
-        panel.add(new JLabel("Return Book - Book ID:"));
-        panel.add(returnBookIdField);
-        panel.add(returnBtn);
+        mainPanel.add(issuePanel);
+        mainPanel.add(returnPanel);
+        
+        panel.add(mainPanel, BorderLayout.NORTH);
 
+        // Button actions
         issueBtn.addActionListener(e -> {
             String roll = issueRollField.getText().trim();
             String bookIdStr = issueBookIdField.getText().trim();
@@ -281,28 +349,42 @@ public class LMS extends JFrame {
     }
 
     private JPanel createTransactionPanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Main panel to stack the sub-panels vertically
+        JPanel mainInputPanel = new JPanel();
+        mainInputPanel.setLayout(new BoxLayout(mainInputPanel, BoxLayout.Y_AXIS));
+
+        // Panel for "Display All Transactions" button
+        JPanel displayPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         JButton displayAllBtn = new JButton("Display All Transactions");
+        displayPanel.add(displayAllBtn);
 
-        JTextField searchMemberField = new JTextField();
+        // Panel for searching by member roll number
+        JPanel searchMemberPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField searchMemberField = new JTextField(15);
         JButton searchMemberBtn = new JButton("Search by Member Roll Number");
+        searchMemberPanel.add(new JLabel("Member Roll Number:"));
+        searchMemberPanel.add(searchMemberField);
+        searchMemberPanel.add(searchMemberBtn);
 
-        JTextField searchBookIdField = new JTextField();
+        // Panel for searching by book ID
+        JPanel searchBookPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JTextField searchBookIdField = new JTextField(15);
         JButton searchBookBtn = new JButton("Search by Book ID");
+        searchBookPanel.add(new JLabel("Book ID:"));
+        searchBookPanel.add(searchBookIdField);
+        searchBookPanel.add(searchBookBtn);
 
-        panel.add(displayAllBtn);
-        panel.add(new JLabel());
+        // Add all sub-panels to the main input panel
+        mainInputPanel.add(displayPanel);
+        mainInputPanel.add(searchMemberPanel);
+        mainInputPanel.add(searchBookPanel);
+        
+        panel.add(mainInputPanel, BorderLayout.NORTH);
 
-        panel.add(new JLabel("Member Roll Number:"));
-        panel.add(searchMemberField);
-        panel.add(searchMemberBtn);
-
-        panel.add(new JLabel("Book ID:"));
-        panel.add(searchBookIdField);
-        panel.add(searchBookBtn);
-
+        // Button actions
         displayAllBtn.addActionListener(e -> {
             outputArea.setText(issueReturnManager.displayAllTransactions());
         });
@@ -339,5 +421,11 @@ public class LMS extends JFrame {
 
     private void clearFields(JTextField... fields) {
         for (JTextField f : fields) f.setText("");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new LMS();
+        });
     }
 }
