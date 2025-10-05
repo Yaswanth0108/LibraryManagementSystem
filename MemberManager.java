@@ -1,3 +1,4 @@
+
 import java.util.*;
 
 public class MemberManager {
@@ -63,5 +64,12 @@ public class MemberManager {
             }
         }
         return false;
+    }
+public List<Member> getMembers() {
+        return this.members;
+    }
+    
+    public void setMembers(List<Member> members) {
+        this.members = members;
     }
 }
